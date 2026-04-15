@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Administrasi Kantor - Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+      .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .status-badge {
+        padding: 4px 10px;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 text-gray-800 font-sans">
+    <!-- Sidebar -->
+    <aside class="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white p-4 flex flex-col shadow-lg z-10">
+      <div class="text-xl font-bold mb-8 flex items-center gap-2"><i class="fa-solid fa-briefcase text-blue-400"></i> AdminKantor</div>
+      <nav class="flex-1 space-y-2">
+        <button onclick="showPage('dashboard')" class="nav-btn w-full text-left px-4 py-2 rounded hover:bg-slate-700 bg-slate-800 transition" id="btn-dashboard"><i class="fa-solid fa-chart-line w-6"></i> Dashboard</button>
+        <button onclick="showPage('masuk')" class="nav-btn w-full text-left px-4 py-2 rounded hover:bg-slate-700 transition" id="btn-masuk"><i class="fa-solid fa-inbox w-6"></i> Surat Masuk</button>
+        <button onclick="showPage('keluar')" class="nav-btn w-full text-left px-4 py-2 rounded hover:bg-slate-700 transition" id="btn-keluar"><i class="fa-solid fa-paper-plane w-6"></i> Surat Keluar</button>
+        <button onclick="showPage('reimburse')" class="nav-btn w-full text-left px-4 py-2 rounded hover:bg-slate-700 transition" id="btn-reimburse"><i class="fa-solid fa-money-bill-wave w-6"></i> Reimbursement</button>
+      </nav>
+      <div class="mt-auto pt-4 border-t border-slate-700">
+        <button onclick="resetData()" class="w-full px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm transition"><i class="fa-solid fa-rotate-left mr-2"></i> Reset Data Demo</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-64 p-6 min-h-screen">
+      <header class="flex justify-between items-center mb-6 bg-white p-4 rounded-lg shadow-sm">
+        <h1 class="text-2xl font-bold" id="page-title">Dashboard</h1>
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-gray-500">Mode: <span class="font-semibold text-blue-600">Admin Demo</span></span>
+          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">A</div>
+        </div>
+      </header>
+
+      <!-- Dashboard -->
+      <section id="page-dashboard" class="page-section fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+            <p class="text-gray-500 text-sm">Surat Masuk</p>
+            <p class="text-2xl font-bold" id="stat-masuk">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-green-500">
+            <p class="text-gray-500 text-sm">Surat Keluar</p>
+            <p class="text-2xl font-bold" id="stat-keluar">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-yellow-500">
+            <p class="text-gray-500 text-sm">Reimburse Pending</p>
+            <p class="text-2xl font-bold" id="stat-reimburse-pending">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
+            <p class="text-gray-500 text-sm">Total Nominal Reimburse</p>
+            <p class="text-xl font-bold" id="stat-reimburse-nominal">Rp 0</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-lg shadow-sm">
+            <h3 class="font-bold mb-3">Aktivitas Surat Terbaru</h3>
+            <ul id="recent-logs-surat" class="space-y-2 text-sm text-gray-600"></ul>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow-sm">
+            <h3 class="font-bold mb-3">Aktivitas Reimburse Terbaru</h3>
+            <ul id="recent-logs-reimburse" class="space-y-2 text-sm text-gray-600"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Surat Masuk -->
+      <section id="page-masuk" class="page-section hidden fade-in">
+        <div class="flex justify-between items-center mb-4">
+          <input type="text" id="search-masuk" placeholder="Cari nomor/perihal..." class="px-4 py-2 border rounded-lg w-1/3 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <button onclick="openLetterModal('masuk')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"><i class="fa-solid fa-plus mr-2"></i> Tambah Surat Masuk</button>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table class="w-full text-left">
+            <thead class="bg-gray-100 border-b">
+              <tr>
+                <th class="p-3">No. Agenda</th>
+                <th class="p-3">Tanggal</th>
+                <th class="p-3">Perihal</th>
+                <th class="p-3">Pengirim</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="table-masuk"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Surat Keluar -->
+      <section id="page-keluar" class="page-section hidden fade-in">
+        <div class="flex justify-between items-center mb-4">
+          <input type="text" id="search-keluar" placeholder="Cari nomor/perihal..." class="px-4 py-2 border rounded-lg w-1/3 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <button onclick="openLetterModal('keluar')" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"><i class="fa-solid fa-plus mr-2"></i> Buat Draft Keluar</button>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table class="w-full text-left">
+            <thead class="bg-gray-100 border-b">
+              <tr>
+                <th class="p-3">No. Surat</th>
+                <th class="p-3">Tanggal</th>
+                <th class="p-3">Perihal</th>
+                <th class="p-3">Tujuan</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="table-keluar"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Reimbursement -->
+      <section id="page-reimburse" class="page-section hidden fade-in">
+        <div class="flex justify-between items-center mb-4">
+          <input type="text" id="search-reimburse" placeholder="Cari kategori/keterangan..." class="px-4 py-2 border rounded-lg w-1/3 focus:ring-2 focus:ring-blue-500 outline-none" />
+          <button onclick="openReimburseModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition"><i class="fa-solid fa-plus mr-2"></i> Ajukan Reimburse</button>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <table class="w-full text-left">
+            <thead class="bg-gray-100 border-b">
+              <tr>
+                <th class="p-3">Tanggal</th>
+                <th class="p-3">Kategori</th>
+                <th class="p-3">Keterangan</th>
+                <th class="p-3">Jumlah</th>
+                <th class="p-3">Status</th>
+                <th class="p-3 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="table-reimburse"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Letter Modal -->
+    <div id="modal-letter" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 transform transition-all scale-95">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold" id="letter-modal-title">Tambah Data</h3>
+          <button onclick="closeLetterModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+        </div>
+        <form id="form-letter" onsubmit="handleLetterSubmit(event)">
+          <input type="hidden" id="l-id" /><input type="hidden" id="l-jenis" />
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div><label class="block text-sm font-medium mb-1">Nomor Surat</label><input type="text" id="l-nomor" required class="w-full px-3 py-2 border rounded outline-none" /></div>
+            <div><label class="block text-sm font-medium mb-1">Tanggal</label><input type="date" id="l-tanggal" required class="w-full px-3 py-2 border rounded outline-none" /></div>
+          </div>
+          <div class="mb-4"><label class="block text-sm font-medium mb-1">Perihal</label><input type="text" id="l-perihal" required class="w-full px-3 py-2 border rounded outline-none" /></div>
+          <div class="mb-4"><label class="block text-sm font-medium mb-1" id="l-label-pihak">Pengirim / Tujuan</label><input type="text" id="l-pihak" required class="w-full px-3 py-2 border rounded outline-none" /></div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-1">Status</label>
+            <select id="l-status" class="w-full px-3 py-2 border rounded outline-none">
+              <option value="Diterima">Diterima / Draft</option>
+              <option value="Didisposisikan">Didisposisikan</option>
+              <option value="Dalam Proses">Dalam Proses</option>
+              <option value="Selesai">Selesai / Terkirim</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-3">
+            <button type="button" onclick="closeLetterModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Batal</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Reimburse Modal -->
+    <div id="modal-reimburse" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 transform transition-all scale-95">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold" id="reimburse-modal-title">Ajukan Reimburse</h3>
+          <button onclick="closeReimburseModal()" class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+        </div>
+        <form id="form-reimburse" onsubmit="handleReimburseSubmit(event)">
+          <input type="hidden" id="r-id" />
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div><label class="block text-sm font-medium mb-1">Tanggal Pengeluaran</label><input type="date" id="r-tanggal" required class="w-full px-3 py-2 border rounded outline-none" /></div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Kategori</label>
+              <select id="r-kategori" required class="w-full px-3 py-2 border rounded outline-none">
+                <option value="Transport">Transportasi</option>
+                <option value="Makan">Makan/Minum</option>
+                <option value="Akomodasi">Akomodasi</option>
+                <option value="Operasional">Operasional</option>
+                <option value="Lainnya">Lainnya</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-4"><label class="block text-sm font-medium mb-1">Keterangan</label><input type="text" id="r-keterangan" required class="w-full px-3 py-2 border rounded outline-none" /></div>
+          <div class="mb-4"><label class="block text-sm font-medium mb-1">Jumlah (Rp)</label><input type="number" id="r-jumlah" required class="w-full px-3 py-2 border rounded outline-none" /></div>
+          <div class="mb-6">
+            <label class="block text-sm font-medium mb-1">Status Approval</label>
+            <select id="r-status" class="w-full px-3 py-2 border rounded outline-none">
+              <option value="Draft">Draft / Menunggu</option>
+              <option value="Disetujui">Disetujui</option>
+              <option value="Ditolak">Ditolak</option>
+              <option value="Dibayar">Sudah Dibayar</option>
+            </select>
+          </div>
+          <div class="flex justify-end gap-3">
+            <button type="button" onclick="closeReimburseModal()" class="px-4 py-2 border rounded hover:bg-gray-100">Batal</button>
+            <button type="submit" class="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700">Simpan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "admin_kantor_demo";
+      let data = { masuk: [], keluar: [], reimburse: [], logs: [] };
+      const fmtRupiah = (n) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR" }).format(n);
+
+      function loadData() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) data = JSON.parse(saved);
+        else seedDummyData();
+        renderAll();
+      }
+      function saveData() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+
+      function seedDummyData() {
+        const today = new Date();
+        const fmt = (d) => d.toISOString().split("T")[0];
+        const add = (d, n) => {
+          const r = new Date(d);
+          r.setDate(r.getDate() + n);
+          return r;
+        };
+
+        data.masuk = [
+          { id: 1, nomor: "SM/001/X/2024", tanggal: fmt(today), perihal: "Undangan Rapat Koordinasi", pihak: "Dinas Pendidikan", status: "Diterima" },
+          { id: 2, nomor: "SM/002/X/2024", tanggal: fmt(add(today, -2)), perihal: "Penawaran Jasa IT", pihak: "PT Solusi Digital", status: "Didisposisikan" },
+          { id: 3, nomor: "SM/003/X/2024", tanggal: fmt(add(today, -5)), perihal: "Laporan Keuangan Q3", pihak: "Internal Keuangan", status: "Dalam Proses" },
+        ];
+        data.keluar = [
+          { id: 101, nomor: "SK/045/X/2024", tanggal: fmt(today), perihal: "Pengesahan Anggaran", pihak: "Direktur Utama", status: "Draft" },
+          { id: 102, nomor: "SK/044/X/2024", tanggal: fmt(add(today, -1)), perihal: "Balasan Kerjasama", pihak: "PT Maju Jaya", status: "Terkirim" },
+        ];
+        data.reimburse = [
+          { id: 501, tanggal: fmt(add(today, -1)), kategori: "Transport", keterangan: "Ojek online ke kantor cabang", jumlah: 45000, status: "Draft" },
+          { id: 502, tanggal: fmt(add(today, -3)), kategori: "Makan", keterangan: "Konsumsi rapat klien", jumlah: 250000, status: "Disetujui" },
+          { id: 503, tanggal: fmt(add(today, -7)), kategori: "Akomodasi", keterangan: "Hotel dinas luar kota", jumlah: 850000, status: "Dibayar" },
+        ];
+        data.logs = [`${new Date().toLocaleTimeString()} - Admin tambah surat SM/001`, `${new Date().toLocaleTimeString()} - Staff ajukan reimburse transport`];
+        saveData();
+      }
+
+      function showPage(page) {
+        document.querySelectorAll(".page-section").forEach((el) => el.classList.add("hidden"));
+        document.getElementById(`page-${page}`).classList.remove("hidden");
+        document.querySelectorAll(".nav-btn").forEach((b) => b.classList.remove("bg-slate-800", "font-bold"));
+        document.getElementById(`btn-${page}`).classList.add("bg-slate-800", "font-bold");
+        document.getElementById("page-title").innerText = { dashboard: "Dashboard", masuk: "Surat Masuk", keluar: "Surat Keluar", reimburse: "Reimbursement" }[page];
+        if (page === "dashboard") renderDashboard();
+        if (page === "masuk") renderTable("masuk");
+        if (page === "keluar") renderTable("keluar");
+        if (page === "reimburse") renderReimburseTable();
+      }
+
+      function renderAll() {
+        renderDashboard();
+        renderTable("masuk");
+        renderTable("keluar");
+        renderReimburseTable();
+      }
+
+      function renderDashboard() {
+        document.getElementById("stat-masuk").innerText = data.masuk.length;
+        document.getElementById("stat-keluar").innerText = data.keluar.length;
+        const pendingR = data.reimburse.filter((r) => r.status === "Draft" || r.status === "Menunggu").length;
+        document.getElementById("stat-reimburse-pending").innerText = pendingR;
+        const totalR = data.reimburse.reduce((sum, r) => sum + (r.status === "Dibayar" || r.status === "Disetujui" ? r.jumlah : 0), 0);
+        document.getElementById("stat-reimburse-nominal").innerText = fmtRupiah(totalR);
+
+        document.getElementById("recent-logs-surat").innerHTML = data.logs
+          .slice(-4)
+          .reverse()
+          .map((l) => `<li class="border-b pb-1 last:border-0">${l}</li>`)
+          .join("");
+        document.getElementById("recent-logs-reimburse").innerHTML =
+          data.logs
+            .slice(-4, -1)
+            .reverse()
+            .map((l) => `<li class="border-b pb-1 last:border-0">${l}</li>`)
+            .join("") || '<li class="text-gray-400 italic">Belum ada aktivitas</li>';
+      }
+
+      const badgeColor = {
+        Diterima: "bg-blue-100 text-blue-800",
+        Draft: "bg-gray-100 text-gray-800",
+        Didisposisikan: "bg-yellow-100 text-yellow-800",
+        "Dalam Proses": "bg-orange-100 text-orange-800",
+        Selesai: "bg-green-100 text-green-800",
+        Disetujui: "bg-purple-100 text-purple-800",
+        Terkirim: "bg-green-100 text-green-800",
+        Menunggu: "bg-gray-100 text-gray-800",
+        Ditolak: "bg-red-100 text-red-800",
+        Dibayar: "bg-emerald-100 text-emerald-800",
+      };
+
+      function renderTable(type) {
+        const search = document.getElementById(`search-${type}`).value.toLowerCase();
+        const filtered = data[type].filter((s) => s.nomor.toLowerCase().includes(search) || s.perihal.toLowerCase().includes(search));
+        document.getElementById(`table-${type}`).innerHTML = filtered
+          .map(
+            (s) => `
+                <tr class="hover:bg-gray-50 border-b last:border-0">
+                    <td class="p-3 font-mono text-sm">${s.nomor}</td><td class="p-3 text-sm">${s.tanggal}</td>
+                    <td class="p-3">${s.perihal}</td><td class="p-3 text-sm text-gray-600">${s.pihak}</td>
+                    <td class="p-3"><span class="status-badge ${badgeColor[s.status] || "bg-gray-100"}">${s.status}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="openLetterModal('${type}', ${s.id})" class="text-blue-600 hover:text-blue-800 mx-1"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteItem('${type}', ${s.id})" class="text-red-600 hover:text-red-800 mx-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`
+          )
+          .join("");
+      }
+
+      function renderReimburseTable() {
+        const search = document.getElementById("search-reimburse").value.toLowerCase();
+        const filtered = data.reimburse.filter((r) => r.kategori.toLowerCase().includes(search) || r.keterangan.toLowerCase().includes(search));
+        document.getElementById("table-reimburse").innerHTML = filtered
+          .map(
+            (r) => `
+                <tr class="hover:bg-gray-50 border-b last:border-0">
+                    <td class="p-3 text-sm">${r.tanggal}</td><td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded text-xs">${r.kategori}</span></td>
+                    <td class="p-3">${r.keterangan}</td><td class="p-3 font-semibold text-emerald-700">${fmtRupiah(r.jumlah)}</td>
+                    <td class="p-3"><span class="status-badge ${badgeColor[r.status] || "bg-gray-100"}">${r.status}</span></td>
+                    <td class="p-3 text-center">
+                        <button onclick="openReimburseModal(${r.id})" class="text-blue-600 hover:text-blue-800 mx-1"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteReimburse(${r.id})" class="text-red-600 hover:text-red-800 mx-1"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>`
+          )
+          .join("");
+      }
+
+      // Letter Modal
+      function openLetterModal(type, id = null) {
+        document.getElementById("modal-letter").classList.remove("hidden");
+        document.getElementById("modal-letter").classList.add("flex");
+        document.getElementById("l-jenis").value = type;
+        document.getElementById("l-label-pihak").innerText = type === "masuk" ? "Pengirim" : "Tujuan";
+        document.getElementById("letter-modal-title").innerText = id ? `Edit Surat` : `Tambah Surat ${type === "masuk" ? "Masuk" : "Keluar"}`;
+        document.getElementById("form-letter").reset();
+        document.getElementById("l-id").value = id || "";
+        if (id) {
+          const i = data[type].find((s) => s.id === id);
+          document.getElementById("l-nomor").value = i.nomor;
+          document.getElementById("l-tanggal").value = i.tanggal;
+          document.getElementById("l-perihal").value = i.perihal;
+          document.getElementById("l-pihak").value = i.pihak;
+          document.getElementById("l-status").value = i.status;
+        }
+      }
+      function closeLetterModal() {
+        document.getElementById("modal-letter").classList.add("hidden");
+        document.getElementById("modal-letter").classList.remove("flex");
+      }
+      function handleLetterSubmit(e) {
+        e.preventDefault();
+        const type = document.getElementById("l-jenis").value;
+        const id = document.getElementById("l-id").value;
+        const p = {
+          id: id ? parseInt(id) : Date.now(),
+          nomor: document.getElementById("l-nomor").value,
+          tanggal: document.getElementById("l-tanggal").value,
+          perihal: document.getElementById("l-perihal").value,
+          pihak: document.getElementById("l-pihak").value,
+          status: document.getElementById("l-status").value,
+        };
+        if (id) {
+          const idx = data[type].findIndex((s) => s.id == id);
+          data[type][idx] = p;
+          data.logs.push(`${new Date().toLocaleTimeString()} - Edit surat ${type} ${p.nomor}`);
+        } else {
+          data[type].push(p);
+          data.logs.push(`${new Date().toLocaleTimeString()} - Tambah surat ${type} ${p.nomor}`);
+        }
+        saveData();
+        closeLetterModal();
+        renderTable(type);
+        renderDashboard();
+      }
+
+      // Reimburse Modal
+      function openReimburseModal(id = null) {
+        document.getElementById("modal-reimburse").classList.remove("hidden");
+        document.getElementById("modal-reimburse").classList.add("flex");
+        document.getElementById("reimburse-modal-title").innerText = id ? "Edit Reimburse" : "Ajukan Reimburse";
+        document.getElementById("form-reimburse").reset();
+        document.getElementById("r-id").value = id || "";
+        if (id) {
+          const r = data.reimburse.find((i) => i.id === id);
+          document.getElementById("r-tanggal").value = r.tanggal;
+          document.getElementById("r-kategori").value = r.kategori;
+          document.getElementById("r-keterangan").value = r.keterangan;
+          document.getElementById("r-jumlah").value = r.jumlah;
+          document.getElementById("r-status").value = r.status;
+        }
+      }
+      function closeReimburseModal() {
+        document.getElementById("modal-reimburse").classList.add("hidden");
+        document.getElementById("modal-reimburse").classList.remove("flex");
+      }
+      function handleReimburseSubmit(e) {
+        e.preventDefault();
+        const id = document.getElementById("r-id").value;
+        const p = {
+          id: id ? parseInt(id) : Date.now(),
+          tanggal: document.getElementById("r-tanggal").value,
+          kategori: document.getElementById("r-kategori").value,
+          keterangan: document.getElementById("r-keterangan").value,
+          jumlah: parseInt(document.getElementById("r-jumlah").value),
+          status: document.getElementById("r-status").value,
+        };
+        if (id) {
+          const idx = data.reimburse.findIndex((i) => i.id == id);
+          data.reimburse[idx] = p;
+          data.logs.push(`${new Date().toLocaleTimeString()} - Edit reimburse ${p.keterangan}`);
+        } else {
+          data.reimburse.push(p);
+          data.logs.push(`${new Date().toLocaleTimeString()} - Ajukan reimburse ${p.kategori} ${fmtRupiah(p.jumlah)}`);
+        }
+        saveData();
+        closeReimburseModal();
+        renderReimburseTable();
+        renderDashboard();
+      }
+      function deleteReimburse(id) {
+        if (confirm("Hapus data reimburse?")) {
+          data.reimburse = data.reimburse.filter((i) => i.id !== id);
+          data.logs.push(`${new Date().toLocaleTimeString()} - Hapus reimburse`);
+          saveData();
+          renderReimburseTable();
+          renderDashboard();
+        }
+      }
+
+      // Shared
+      function deleteItem(type, id) {
+        if (confirm("Hapus data?")) {
+          const i = data[type].find((s) => s.id === id);
+          data[type] = data[type].filter((s) => s.id !== id);
+          data.logs.push(`${new Date().toLocaleTimeString()} - Hapus ${type} ${i.nomor || i.keterangan}`);
+          saveData();
+          renderTable(type);
+          renderDashboard();
+        }
+      }
+      function resetData() {
+        if (confirm("Reset ke data demo?")) {
+          localStorage.removeItem(STORAGE_KEY);
+          seedDummyData();
+          renderAll();
+        }
+      }
+      document.getElementById("search-masuk").addEventListener("input", () => renderTable("masuk"));
+      document.getElementById("search-keluar").addEventListener("input", () => renderTable("keluar"));
+      document.getElementById("search-reimburse").addEventListener("input", () => renderReimburseTable());
+
+      window.addEventListener("DOMContentLoaded", () => {
+        showPage("dashboard");
+        loadData();
+      });
+    </script>
+  </body>
+</html>

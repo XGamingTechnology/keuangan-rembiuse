@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - db_data:/var/lib/postgresql/data
-      - ./backups:/backups # Mount folder untuk backup manual
+      - ./backups:/backups
     networks:
       - office_network
     healthcheck:
@@ -29,22 +29,19 @@ services:
     container_name: office_admin_backend
     restart: unless-stopped
     environment:
-      # Connect ke DB container dalam network yang sama
       - POSTGRES_HOST=db
       - POSTGRES_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
-      # Auth
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
-      # Server
       - NODE_ENV=production
       - PORT=${BACKEND_PORT}
       - CORS_ORIGIN=https://office.getopurtunity.online
-    # ⚠️ Port backend TIDAK di-expose ke host! Semua via Caddy
-    # ports:
-    #   - "${BACKEND_PORT}:${BACKEND_PORT}"  # ← Comment out untuk production
+    # ✅ EXPOSE PORT KE 127.0.0.1 SAJA (Aman untuk Caddy)
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-3000}:${BACKEND_PORT:-3000}"
     depends_on:
       db:
         condition: service_healthy
@@ -52,7 +49,7 @@ services:
       - office_network
     command: sh -c "sleep 5 && node dist/main"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT}/api/office/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${BACKEND_PORT:-3000}/api/office/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -67,16 +64,16 @@ services:
     restart: unless-stopped
     environment:
       - VITE_API_URL=https://office.getopurtunity.online/api/office
-    # ⚠️ Port frontend TIDAK di-expose ke host! Semua via Caddy
-    # ports:
-    #   - "3003:80"  # ← Comment out untuk production
+    # ✅ EXPOSE PORT KE 127.0.0.1 SAJA (Caddy → localhost:5173 → container:80)
+    ports:
+      - "127.0.0.1:5173:80"
     depends_on:
       - backend
     networks:
       - office_network
 
 volumes:
-  db_data: # Persistent volume untuk database
+  db_data:
 
 networks:
   office_network:
